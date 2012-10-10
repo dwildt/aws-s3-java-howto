@@ -1,6 +1,7 @@
 package cc.ttlabs.aws.s3;
 
 import java.io.File;
+import java.io.InputStream;
 
 public interface FileMapper {
 
@@ -20,5 +21,10 @@ public interface FileMapper {
 
 	boolean downloadFile(String rootFolderName, String keyNameNotAvailable,
 			File outputFile);
+
+	void uploadFile(String rootFolderName, String keyName,
+			InputStream imageStream);
+
+	InputStream downloadFile(String rootFolderName, String keyName);
 
 }

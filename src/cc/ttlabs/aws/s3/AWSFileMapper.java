@@ -1,7 +1,11 @@
 package cc.ttlabs.aws.s3;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Iterator;
+
+import org.apache.commons.io.IOUtils;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -13,7 +17,9 @@ import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.Grant;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.Permission;
+import com.amazonaws.services.s3.model.S3Object;
 
 public class AWSFileMapper implements FileMapper {
 	
@@ -99,6 +105,27 @@ public class AWSFileMapper implements FileMapper {
 			e.printStackTrace();
 			return false;
 		}
+	}
+
+	@Override
+	public void uploadFile(String rootFolderName, String keyName,
+			InputStream stream) {
+		s3.putObject(rootFolderName, keyName, stream, null);
+		/*ObjectMetadata metadata = new ObjectMetadata();
+		byte[] bytes = null;
+		try {
+			bytes = IOUtils.toByteArray(stream);
+			metadata.setContentLength(bytes.length);
+			s3.putObject(rootFolderName, keyName, stream, metadata);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}*/
+	}
+
+	@Override
+	public InputStream downloadFile(String rootFolderName, String keyName) {
+		S3Object s3Object = s3.getObject(rootFolderName, keyName);
+		return s3Object.getObjectContent();
 	}
 	
 }

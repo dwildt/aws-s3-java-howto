@@ -5,12 +5,16 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
 import java.util.UUID;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -85,7 +89,7 @@ public class AWSFileMapperTest {
 
 	
 	@Test
-	public void shouldBeAbleToUploadFileToBucketAndDownload(){
+	public void shouldBeAbleToUploadFileToBucketAndDownloadToFile(){
 		URL imageFile = getClass().getResource(AWS_UPLOAD_FILE);
 		String keyName = folderName + getNewFileName();
 		File outputFile = null;
@@ -125,4 +129,42 @@ public class AWSFileMapperTest {
 			om.deleteFile(rootFolderName, folderName);
 		}
 	}
+	
+	
+	@Test
+	public void shouldBeAbleToUploadAndDownloadUsingInputStreams(){
+		InputStream outStream = null;
+		InputStream inStream = null;
+		File outputFile = null;
+		FileOutputStream fo = null;
+
+		URL imageFile = getClass().getResource(AWS_UPLOAD_FILE);
+		String keyName = folderName + getNewFileName();
+		try {
+			inStream = new FileInputStream(new File(imageFile.toURI()));
+			
+			om.uploadFile(rootFolderName, keyName, inStream);
+		
+			outputFile = File.createTempFile("downloaded-11-file-aws-", ".png");
+			System.out.println(outputFile.getAbsolutePath());
+			outStream = om.downloadFile(rootFolderName, keyName);
+			fo = new FileOutputStream(outputFile);
+			byte[] bytes = IOUtils.toByteArray(outStream);
+			fo.write(bytes);
+			fo.flush();
+			fo.close();
+			assertTrue("Error downloading file", outputFile.length() > 0);
+		} catch (IOException e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		} finally {
+			om.deleteFile(rootFolderName, keyName);
+			om.deleteFile(rootFolderName, folderName);
+		}
+		
+	}
+
 }
