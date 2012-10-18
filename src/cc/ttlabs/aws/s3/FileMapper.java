@@ -27,4 +27,6 @@ public interface FileMapper {
 
 	InputStream downloadFile(String rootFolderName, String keyName);
 
+	String getFileUrl(String rootFolderName, String keyName);
+
 }

@@ -1,11 +1,8 @@
 package cc.ttlabs.aws.s3;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
-
-import org.apache.commons.io.IOUtils;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
@@ -17,7 +14,6 @@ import com.amazonaws.services.s3.model.AccessControlList;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.Grant;
-import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.Permission;
 import com.amazonaws.services.s3.model.S3Object;
 
@@ -33,6 +29,7 @@ public class AWSFileMapper implements FileMapper {
 
 	private AmazonS3 s3;
 	private String region;
+	private String endpoint;
 	
 	@Override
 	public boolean isRootFolder(String rootFolderName) {
@@ -49,10 +46,11 @@ public class AWSFileMapper implements FileMapper {
 		s3 = new AmazonS3Client(ac);
 		
 		if(!region.equals(AWS_REGION_US_STANDARD))
-		  s3.setEndpoint(SE_END_POINT_START+region+S3_END_POINT_END);
+		  setEndpoint(SE_END_POINT_START+region+S3_END_POINT_END);
 		else
-	      s3.setEndpoint(S3_END_POINT_US_STANDARD);		  
+	      setEndpoint(S3_END_POINT_US_STANDARD);		  
 	 
+		s3.setEndpoint(getEndpoint());
 	}
 
 	@Override
@@ -82,7 +80,6 @@ public class AWSFileMapper implements FileMapper {
 
 	@Override
 	public boolean isFilePublic(String rootFolderName, String fileName) {
-		//TODO Change return to "return s3.getResourceUrl(rootFolderName, fileName) != null;"
 		AccessControlList acl = s3.getObjectAcl(rootFolderName, fileName);
 		for (Iterator<Grant> iterator = acl.getGrants().iterator(); iterator.hasNext();) {
 			Grant grant = iterator.next();
@@ -111,21 +108,31 @@ public class AWSFileMapper implements FileMapper {
 	public void uploadFile(String rootFolderName, String keyName,
 			InputStream stream) {
 		s3.putObject(rootFolderName, keyName, stream, null);
-		/*ObjectMetadata metadata = new ObjectMetadata();
-		byte[] bytes = null;
-		try {
-			bytes = IOUtils.toByteArray(stream);
-			metadata.setContentLength(bytes.length);
-			s3.putObject(rootFolderName, keyName, stream, metadata);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}*/
 	}
 
 	@Override
 	public InputStream downloadFile(String rootFolderName, String keyName) {
 		S3Object s3Object = s3.getObject(rootFolderName, keyName);
 		return s3Object.getObjectContent();
+	}
+
+	@Override
+	public String getFileUrl(String rootFolderName, String keyName) {
+		if(isFilePublic(rootFolderName, keyName))
+			return buildPublicFileURL(rootFolderName, keyName);
+		else return null;
+	}
+
+	private String buildPublicFileURL(String rootFolderName, String keyName) {
+		return "http://" + getEndpoint() + "/" + rootFolderName + "/" + keyName;
+	}
+
+	private void setEndpoint(String endpoint) {
+		this.endpoint = endpoint;
+	}
+
+	public String getEndpoint() {
+		return endpoint;
 	}
 	
 }

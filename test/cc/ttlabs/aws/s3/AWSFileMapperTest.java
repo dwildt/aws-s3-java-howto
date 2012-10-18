@@ -1,6 +1,8 @@
 package cc.ttlabs.aws.s3;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -23,6 +25,8 @@ import org.junit.Test;
 
 public class AWSFileMapperTest {
 	
+	private static final String FULL_S3_END_POINT = "http://s3-sa-east-1.amazonaws.com/";
+
 	public static final String AWS_UPLOAD_FILE = "/cc/ttlabs/aws/s3/trevisantecnologia_altaresolucao_aws.png";
 	
 	private FileMapper om = null;
@@ -115,12 +119,15 @@ public class AWSFileMapperTest {
 	public void shouldBeAbleToUploadFileAndMakeItPublic(){
 		URL imageFile = getClass().getResource(AWS_UPLOAD_FILE);
 		String keyName = folderName + getNewFileName();
+		String publicURL = FULL_S3_END_POINT + rootFolderName + "/" + keyName;
 
 		try {
 			om.uploadFile(rootFolderName, keyName, new File(imageFile.toURI()));
 			assertFalse(om.isFilePublic(rootFolderName, keyName));
+			assertNull(om.getFileUrl(rootFolderName,keyName));
 			om.makePublic(rootFolderName, keyName);
 			assertTrue(om.isFilePublic(rootFolderName, keyName));
+			assertEquals(publicURL, om.getFileUrl(rootFolderName,keyName));
 		} catch (URISyntaxException e) {
 			e.printStackTrace();
 			fail(e.getMessage());
@@ -146,7 +153,6 @@ public class AWSFileMapperTest {
 			om.uploadFile(rootFolderName, keyName, inStream);
 		
 			outputFile = File.createTempFile("downloaded-11-file-aws-", ".png");
-			System.out.println(outputFile.getAbsolutePath());
 			outStream = om.downloadFile(rootFolderName, keyName);
 			fo = new FileOutputStream(outputFile);
 			byte[] bytes = IOUtils.toByteArray(outStream);
